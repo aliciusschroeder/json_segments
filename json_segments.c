@@ -54,7 +54,14 @@ void json_segments_add(const char *unique_id, int sequence_number, int total_seg
     }
 
     // Create new entry, if unique_id does not exist yet
-    all_json_segments = realloc(all_json_segments, sizeof(JsonSegmentInfo) * (all_json_segments_count + 1));
+    JsonSegmentInfo *temp = realloc(all_json_segments, sizeof(JsonSegmentInfo) * (all_json_segments_count + 1));
+    if (temp == NULL) {
+        fprintf(stderr, "Memory allocation error!\n");
+        return NULL;
+    } else {
+        all_json_segments = temp;
+    }
+
     int idx = all_json_segments_count;
     all_json_segments[idx].unique_id = strdup(unique_id);
     all_json_segments[idx].total_segments = total_segments;
@@ -210,7 +217,15 @@ void json_segments_delete_segments(const char *unique_id) {
             }
 
             all_json_segments_count--;
-            all_json_segments = realloc(all_json_segments, sizeof(JsonSegmentInfo) * all_json_segments_count);
+            
+            JsonSegmentInfo *temp = realloc(all_json_segments, sizeof(JsonSegmentInfo) * all_json_segments_count);
+            if (temp == NULL) {
+                fprintf(stderr, "Memory allocation error!\n");
+                return NULL;
+            } else {
+                all_json_segments = temp;
+            }
+
             return;
         }
     }

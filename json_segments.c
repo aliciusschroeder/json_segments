@@ -26,7 +26,7 @@ void json_segments_add(const char *unique_id, int sequence_number, int total_seg
         if (strcmp(all_json_segments[i].unique_id, unique_id) == 0) {
             // Check data consistency
             if (all_json_segments[i].total_segments != total_segments) {
-                fprintf(stderr, "Error: Inconsistent total number of segments\n");
+                fprintf(stderr, "Error: Inconsistent total number of segments for unique ID %s.\n", unique_id);
                 return;
             }
 
@@ -56,8 +56,8 @@ void json_segments_add(const char *unique_id, int sequence_number, int total_seg
     // Create new entry, if unique_id does not exist yet
     JsonSegmentInfo *temp = realloc(all_json_segments, sizeof(JsonSegmentInfo) * (all_json_segments_count + 1));
     if (temp == NULL) {
-        fprintf(stderr, "Memory allocation error!\n");
-        return NULL;
+        fprintf(stderr, "Error: Memory allocation failed for new segment entry.\n");
+        return;
     } else {
         all_json_segments = temp;
     }
@@ -81,7 +81,7 @@ void json_segments_add(const char *unique_id, int sequence_number, int total_seg
 // string from the cJSON object, validating each field before adding the segment.
 void json_segments_parse_input(cJSON *json_obj) {
     if (json_obj == NULL) {
-        fprintf(stderr, "Ungültiges cJSON-Objekt\n");
+        fprintf(stderr, "Error: Invalid cJSON object provided for parsing.\n");
         return;
     }
 
@@ -91,7 +91,7 @@ void json_segments_parse_input(cJSON *json_obj) {
     cJSON *seg = cJSON_GetObjectItem(json_obj, "seg");
 
     if (!cJSON_IsString(uid) || !cJSON_IsNumber(seq) || !cJSON_IsNumber(abs) || !cJSON_IsString(seg)) {
-        fprintf(stderr, "JSON-Objekt enthält ungültige Daten\n");
+        fprintf(stderr, "Error: JSON object contains invalid or missing required fields.\n");
         return;
     }
 
@@ -183,7 +183,7 @@ void json_segments_free_segments_array(cJSON **segments) {
     cJSON *abs_item = cJSON_GetObjectItem(first_segment, "abs");
     if (!cJSON_IsNumber(abs_item)) {
         // Error handling if 'abs' is not a number or does not exist
-        fprintf(stderr, "Error: 'abs' field is missing or not a number in the first segment\n");
+        fprintf(stderr, "Error: 'abs' field is missing or not a number in the first segment.\n");
         return;
     }
 
@@ -220,8 +220,8 @@ void json_segments_delete_segments(const char *unique_id) {
             
             JsonSegmentInfo *temp = realloc(all_json_segments, sizeof(JsonSegmentInfo) * all_json_segments_count);
             if (temp == NULL) {
-                fprintf(stderr, "Memory allocation error!\n");
-                return NULL;
+                fprintf(stderr, "Error: Memory allocation failed during segment deletion.\n");
+                return;
             } else {
                 all_json_segments = temp;
             }
@@ -240,7 +240,7 @@ void json_segments_check_timeout(int timeout) {
         double seconds_diff = difftime(current_time, all_json_segments[i].last_received_timestamp);
         if (seconds_diff > timeout) {
             json_segments_delete_segments(all_json_segments[i].unique_id);
-            // Nach dem Löschen eines Elements, iteriere erneut vom aktuellen Index
+            // After deleting an element, re-iterate from the current index
             i--;
         }
     }
@@ -253,7 +253,7 @@ void json_segments_process_merged(cJSON *json) {
     if (current_json_processing_function != NULL) {
         current_json_processing_function(json);
     } else {
-        fprintf(stderr, "Keine Verarbeitungsfunktion gesetzt\n");
+        fprintf(stderr, "Error: No JSON processing function has been set.\n");
     }
 }
 
@@ -292,7 +292,7 @@ void json_segments_merge(const char *unique_id) {
             // Allocate memory for the complete string
             full_json_str = (char *)malloc(total_length + 1);
             if (full_json_str == NULL) {
-                fprintf(stderr, "Memory allocation error\n");
+                fprintf(stderr, "Error: Memory allocation failed for merged JSON string.\n");
                 return;
             }
 
@@ -305,7 +305,7 @@ void json_segments_merge(const char *unique_id) {
             // Parse the merged JSON
             cJSON *json = cJSON_Parse(full_json_str);
             if (json == NULL) {
-                fprintf(stderr, "Fehler beim Parsen von JSON\n");
+                fprintf(stderr, "Error: Failed to parse the merged JSON string.\n");
                 free(full_json_str);
                 return;
             }
